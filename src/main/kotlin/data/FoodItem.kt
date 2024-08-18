@@ -7,8 +7,8 @@ import org.bson.types.ObjectId
 @Serializable
 data class FoodItem(
     @BsonId val id: String = ObjectId().toString(),
-    val name: String,
-    val image: String,
-    val price: Int,
-    val category: String
+    val name: String = "",
+    val image: String = "",
+    val price: Int = 0,
+    val category: String = ""
 )

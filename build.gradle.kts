@@ -17,6 +17,7 @@ repositories {
     google()
 }
 
+
 dependencies {
     // Note, if you develop a library, you should use compose.desktop.common.
     // compose.desktop.currentOs should be used in launcher-sourceSet
@@ -28,13 +29,21 @@ dependencies {
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("io.insert-koin:koin-core:3.5.3")
+    implementation("io.insert-koin:koin-compose-viewmodel:1.2.0-Beta4")
+    implementation("io.insert-koin:koin-logger-slf4j:3.5.3")
+    implementation("io.insert-koin:koin-compose:1.1.5")
     implementation("org.mongodb:mongodb-driver-core:$mongoVersion")
     implementation("org.mongodb:mongodb-driver-sync:$mongoVersion")
     implementation("org.mongodb:bson:$mongoVersion")
-
     implementation("org.litote.kmongo:kmongo:$mongoVersion")
     implementation("org.litote.kmongo:kmongo-coroutine:$mongoVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("com.darkrockstudios:mpfilepicker:2.1.0")
+
 }
+
+
 
 compose.desktop {
     application {

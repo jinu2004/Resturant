@@ -22,27 +22,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sun.tools.javac.Main
+import domain.viewmodel.MainViewModel
+import domain.viewmodel.ManageDishesViewModel
 import navcontroller.CustomNavigationHost
 import navcontroller.ListOfScreen
+import navcontroller.NavController
 import navcontroller.rememberNavController
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 import util.Res
 
-class HomeScreen {
+class HomeScreen() {
 
 
+    @OptIn(KoinExperimentalAPI::class)
     @Composable
     fun View() {
-
         val navController by rememberNavController(ListOfScreen.OrderLine.label)
 
-
-
-
         Column(
-            modifier = Modifier.fillMaxSize().background(color = Color(0xFFF1FBE8))
+            modifier = Modifier.fillMaxSize().defaultMinSize(1300.dp, 800.dp).background(color = Color(0xFFF1FBE8))
         ) {
-            topBar()
-            CustomNavigationHost(navController)
+            topBar(navController)
+            CustomNavigationHost(
+                navController, manageDishesViewModel = koinViewModel<ManageDishesViewModel>(),
+                mainViewModel = koinViewModel<MainViewModel>()
+            )
 
         }
 
@@ -52,7 +58,7 @@ class HomeScreen {
 
     @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
     @Composable
-    private fun topBar() {
+    private fun topBar(navController: NavController) {
         var selectedTab by remember { mutableIntStateOf(0) }
         Column(modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 10.dp)) {
             Row(
@@ -61,11 +67,11 @@ class HomeScreen {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
-                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "Dashbord",
+                        text = "Dashboard",
                         style = TextStyle(
-                            fontSize = 36.sp,
+                            fontSize = 34.sp,
                             fontFamily = FontFamily(Font(Res.font.inter)),
                             fontWeight = FontWeight.Black,
                             color = Color(0xFF000000),
@@ -82,12 +88,16 @@ class HomeScreen {
                             Text(
                                 text = "Order Line",
                                 style = TextStyle(
-                                    fontSize = 24.sp,
+                                    fontSize = 21.sp,
                                     fontFamily = FontFamily(Font(Res.font.inter)),
                                     fontWeight = FontWeight(600),
                                     color = if (selectedTab == 0) Color(0xFF000000) else Color(0xFF7B7878),
                                 ),
-                                modifier = Modifier.onClick { selectedTab = 0 }
+                                modifier = Modifier.onClick {
+                                    selectedTab = 0
+                                    navController.navigate(ListOfScreen.OrderLine.label)
+
+                                }
                             )
                         }
 
@@ -95,7 +105,7 @@ class HomeScreen {
                             Text(
                                 text = "Manage Table",
                                 style = TextStyle(
-                                    fontSize = 24.sp,
+                                    fontSize = 21.sp,
                                     fontFamily = FontFamily(Font(Res.font.inter)),
                                     fontWeight = FontWeight(600),
                                     color = if (selectedTab == 1) Color(0xFF000000) else Color(0xFF7B7878),
@@ -108,12 +118,15 @@ class HomeScreen {
                             Text(
                                 text = "Manage Dishes",
                                 style = TextStyle(
-                                    fontSize = 24.sp,
+                                    fontSize = 21.sp,
                                     fontFamily = FontFamily(Font(Res.font.inter)),
                                     fontWeight = FontWeight(600),
                                     color = if (selectedTab == 2) Color(0xFF000000) else Color(0xFF7B7878),
                                 ),
-                                modifier = Modifier.onClick { selectedTab = 2 }
+                                modifier = Modifier.onClick {
+                                    selectedTab = 2
+                                    navController.navigate(ListOfScreen.ManageDishes.label)
+                                }
                             )
                         }
 
@@ -133,8 +146,8 @@ class HomeScreen {
                                 ambientColor = Color(0x0000000),
                                 shape = RoundedCornerShape(100)
                             )
-                            .width(54.dp)
-                            .height(54.dp)
+                            .width(48.dp)
+                            .height(48.dp)
                             .background(color = Color(0xFFF1FBE8)),
                         shape = RoundedCornerShape(100),
                         border = BorderStroke(width = 2.dp, color = Color(0xFF000000)),
@@ -153,8 +166,8 @@ class HomeScreen {
                                 shape = RoundedCornerShape(100),
                                 clip = true
                             )
-                            .width(54.dp)
-                            .height(54.dp)
+                            .width(48.dp)
+                            .height(48.dp)
                             .background(color = Color(0xFFF1FBE8)),
                         shape = RoundedCornerShape(100),
                         border = BorderStroke(width = 2.dp, color = Color(0xFF000000)),
@@ -167,16 +180,11 @@ class HomeScreen {
                 }
             }
 
-            Divider(modifier = Modifier.fillMaxWidth().padding(top = 5.dp), thickness = 2.dp)
+            Divider(modifier = Modifier.fillMaxWidth().padding(top = 10.dp), thickness = 2.dp, color = Color.Black)
         }
 
 
     }
-
-
-
-
-
 
 }
 

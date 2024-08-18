@@ -6,19 +6,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.TextButton
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.*
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -33,22 +37,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import data.BillingItemList
 import data.FoodFilter
+import data.FoodItem
 import data.OrderLineCouponCard
+import domain.uiStates.manage_dishes.ManageDishesUiEvent
+import domain.uiStates.orderline.OrderLineUiEvent
+import domain.viewmodel.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import util.OrderStatus
 import util.Res
 import util.shadow
+import java.io.File
 
-class OrderLineScreen {
+class OrderLineScreen(private val mainViewModel: MainViewModel) {
+
+
     @Composable
     fun View() {
+
+
         rememberScrollState(0)
         Row(modifier = Modifier.fillMaxSize().padding(20.dp)) {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(0.7f).fillMaxHeight(), userScrollEnabled = true
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(), userScrollEnabled = true
             ) {
                 item {
                     OrderFilterButtons()
@@ -62,10 +77,8 @@ class OrderLineScreen {
                 }
             }
             Divider(modifier = Modifier.fillMaxHeight().width(2.dp), thickness = 2.dp)
-
-            BillIngTab()
-
         }
+
 
     }
 
@@ -300,24 +313,7 @@ class OrderLineScreen {
     @Composable
     private fun OrderCoupon() {
 
-        val listofCoupon = listOf(
-            OrderLineCouponCard(
-                id = "28678", tableNo = 5, ordered = 2L, status = OrderStatus.SERVED, itemsTotalCount = 2
-            ),
-            OrderLineCouponCard(
-                id = "2BN78", tableNo = 7, ordered = 15L, status = OrderStatus.IN_KITCHEN, itemsTotalCount = 2
-            ),
-            OrderLineCouponCard(
-                id = "28FD6", tableNo = 2, ordered = 2L, status = OrderStatus.WAIT_LIST, itemsTotalCount = 2
-            ),
-            OrderLineCouponCard(
-                id = "2OP78", tableNo = 1, ordered = 30L, status = OrderStatus.READY, itemsTotalCount = 2
-            ),
-            OrderLineCouponCard(
-                id = "2SG6E", tableNo = 9, ordered = 8L, status = OrderStatus.SERVED, itemsTotalCount = 2
-            ),
-
-            )
+        val listOfCoupon = emptyList<OrderLineCouponCard>()
 
 
         val listState = rememberLazyListState(initialFirstVisibleItemIndex = 0, initialFirstVisibleItemScrollOffset = 2)
@@ -331,7 +327,7 @@ class OrderLineScreen {
                 modifier = Modifier.fillMaxWidth().align(Alignment.Center),
                 state = listState
             ) {
-                items(listofCoupon) {
+                items(listOfCoupon) {
 
                     var backgroundColor by remember { mutableStateOf(Color(0xFF30D721)) }
                     var textColor by remember { mutableStateOf(Color(0xFF000000)) }
@@ -484,15 +480,15 @@ class OrderLineScreen {
                     color = Color(0xFF000000),
                 )
             )
+            var foodFilter by remember { mutableStateOf(emptyList<FoodFilter>()) }
 
-            val foodFilter = listOf(
-                FoodFilter("All Menu", "icons8-ice-cream-sundae-48.png", 124),
-                FoodFilter("Dessert", "icons8-cherry-cheesecake-48.png", 14),
-                FoodFilter("Fast Food", "icons8-hamburger-48.png", 24),
-                FoodFilter("Sea Food", "icons8-fish-food-48.png", 14),
-                FoodFilter("Meal", "icons8-ham-48.png", 12),
-            )
-            var selectedIndex by remember { mutableStateOf(0) }
+
+            LaunchedEffect(Unit) {
+                mainViewModel.uiState.collect {
+                    foodFilter = it.listOfCategory
+                }
+            }
+            var selectedIndex by remember { mutableStateOf(foodFilter.size + 1) }
 
             LazyRow(
                 modifier = Modifier.fillMaxWidth().padding(top = 30.dp),
@@ -500,10 +496,52 @@ class OrderLineScreen {
                 horizontalArrangement = Arrangement.spacedBy(30.dp),
                 userScrollEnabled = true
             ) {
+                item {
+                    Card(
+                        onClick = {
+                            selectedIndex =
+                                foodFilter.size + 1;mainViewModel.onEvent(OrderLineUiEvent.FilterFoodItems("All"))
+                        },
+                        modifier = Modifier.shadow(
+                            offsetY = 2.dp,
+                            offsetX = 2.dp,
+                            color = if (selectedIndex == foodFilter.size + 1) Color.White else Color(0x80000000),
+                            radius = 20.dp
+                        ).wrapContentSize(),
+                        backgroundColor = Color(0xFFF1FBE8),
+                        border = BorderStroke(width = 2.dp, color = Color(0xFF000000)),
+                        shape = RoundedCornerShape(size = 20.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.wrapContentWidth().padding(10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Image(
+                                painter = painterResource("icons/categoryIcons/icons8-ice-cream-sundae-48.png"),
+                                contentDescription = "image description",
+                                contentScale = ContentScale.FillBounds,
+                                modifier = Modifier.size(50.dp).align(Alignment.CenterVertically)
+                            )
+                            Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                                Text(
+                                    text = "All", style = TextStyle(
+                                        fontSize = 20.sp,
+                                        fontFamily = FontFamily(Font(Res.font.inter)),
+                                        fontWeight = FontWeight(600),
+                                        color = Color(0xFF000000),
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
                 foodFilter.forEachIndexed { index, it ->
                     item {
                         Card(
-                            onClick = { selectedIndex = index },
+                            onClick = {
+                                selectedIndex =
+                                    index; mainViewModel.onEvent(OrderLineUiEvent.FilterFoodItems(it.foodCategoryName))
+                            },
                             modifier = Modifier.shadow(
                                 offsetY = 2.dp,
                                 offsetX = 2.dp,
@@ -519,7 +557,7 @@ class OrderLineScreen {
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Image(
-                                    painter = painterResource("icons/${it.image}"),
+                                    painter = painterResource("icons/categoryIcons/${it.image}"),
                                     contentDescription = "image description",
                                     contentScale = ContentScale.FillBounds,
                                     modifier = Modifier.size(50.dp).align(Alignment.CenterVertically)
@@ -531,14 +569,6 @@ class OrderLineScreen {
                                             fontFamily = FontFamily(Font(Res.font.inter)),
                                             fontWeight = FontWeight(600),
                                             color = Color(0xFF000000),
-                                        )
-                                    )
-                                    Text(
-                                        text = "${it.items} items", style = TextStyle(
-                                            fontSize = 20.sp,
-                                            fontFamily = FontFamily(Font(Res.font.inter)),
-                                            fontWeight = FontWeight(600),
-                                            color = Color(0xFF454343),
                                         )
                                     )
                                 }
@@ -558,76 +588,60 @@ class OrderLineScreen {
     @Composable
     private fun foodItems() {
 
+        var foodItem by remember { mutableStateOf(emptyList<FoodItem>()) }
+        LaunchedEffect(Unit) {
+            mainViewModel.uiState.collect {
+                foodItem = it.listOfItems
+            }
+        }
+        var count by remember { mutableStateOf(1) }
+
+
         LazyVerticalGrid(
-            columns = GridCells.FixedSize(230.dp),
-            modifier = Modifier.fillMaxWidth().height((2000).dp).padding(top = 20.dp),
+            columns = GridCells.Adaptive(200.dp),
+            modifier = Modifier.fillMaxWidth().height((2000).dp).padding(top = 20.dp, end = 10.dp),
             verticalArrangement = Arrangement.spacedBy(28.dp), horizontalArrangement = Arrangement.spacedBy(28.dp),
             userScrollEnabled = true
         ) {
 
-            items(120) {
+            items(foodItem) {
+                var isChecked by remember { mutableStateOf(false) }
                 Card(
                     modifier = Modifier.border(
                         width = 2.dp,
                         color = Color(0xFF000000),
                         shape = RoundedCornerShape(size = 20.dp)
-                    ).width(246.dp).height(222.dp),
+                    ).fillMaxSize(),
                     backgroundColor = Color(0xFFF1FBE8),
                     shape = RoundedCornerShape(20.dp)
                 ) {
+
+
                     Column(modifier = Modifier.fillMaxSize()) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp).fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(30.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Card(modifier = Modifier.size(85.dp), shape = RoundedCornerShape(100)) {
                                 Image(
-                                    painter = painterResource("images/OIP.jpeg"),
+                                    bitmap = loadImageBitmap(
+                                        File("${System.getenv("APPDATA")}/RestaurantApp/Dish_images/${it.image}.jpg").inputStream()
+                                            .buffered()
+                                    ),
                                     "",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
                             }
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(14.dp)
-                            ) {
-                                IconButton(
-                                    onClick = {},
-                                    modifier = Modifier.padding(1.dp).width(20.dp).height(20.dp)
-                                        .background(color = Color(0xFFEB7E30), shape = RoundedCornerShape(100))
-                                        .clip(RoundedCornerShape(100))
-                                ) {
-                                    Icon(Icons.Default.Close, "")
-                                }
-
-                                Text(
-                                    text = "0", style = TextStyle(
-                                        fontSize = 14.sp,
-                                        fontFamily = FontFamily(Font(Res.font.inter)),
-                                        fontWeight = FontWeight(600),
-                                        color = Color(0xFF000000),
-                                    )
-                                )
-                                IconButton(
-                                    onClick = {},
-                                    modifier = Modifier.padding(1.dp).width(20.dp).height(20.dp)
-                                        .background(color = Color(0xFF30D721), shape = RoundedCornerShape(100))
-                                        .clip(RoundedCornerShape(100))
-                                ) {
-                                    Icon(Icons.Default.Add, "")
-                                }
-
-                            }
                         }
 
                         Column(
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp),
-                            verticalArrangement = Arrangement.SpaceEvenly
+                            modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "Lunch",
+                                text = it.category,
                                 style = TextStyle(
                                     fontSize = 13.sp,
                                     fontFamily = FontFamily(Font(Res.font.inter)),
@@ -636,7 +650,7 @@ class OrderLineScreen {
                                 )
                             )
                             Text(
-                                text = "Grilled Salmon Steak",
+                                text = it.name,
                                 style = TextStyle(
                                     fontSize = 16.sp,
                                     fontFamily = FontFamily(Font(Res.font.inter)),
@@ -647,7 +661,7 @@ class OrderLineScreen {
 
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(
-                                    text = "Price",
+                                    text = "Price x1",
                                     style = TextStyle(
                                         fontSize = 14.sp,
                                         fontFamily = FontFamily(Font(Res.font.inter)),
@@ -657,7 +671,53 @@ class OrderLineScreen {
 
                                 )
                                 Text(
-                                    text = "$15.00",
+                                    text = "$${it.price}",
+                                    style = TextStyle(
+                                        fontSize = 14.sp,
+                                        fontFamily = FontFamily(Font(Res.font.inter)),
+                                        fontWeight = FontWeight(600),
+                                        color = Color(0xFF8230EB),
+                                    )
+                                )
+                            }
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(
+                                    text = "Count",
+                                    style = TextStyle(
+                                        fontSize = 14.sp,
+                                        fontFamily = FontFamily(Font(Res.font.inter)),
+                                        fontWeight = FontWeight(600),
+                                        color = Color(0xFF000000),
+                                    )
+
+                                )
+                                Text(
+                                    text = "$count",
+                                    style = TextStyle(
+                                        fontSize = 14.sp,
+                                        fontFamily = FontFamily(Font(Res.font.inter)),
+                                        fontWeight = FontWeight(600),
+                                        color = Color(0xFF8230EB),
+                                    )
+                                )
+                            }
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(
+                                    text = "Total Price",
+                                    style = TextStyle(
+                                        fontSize = 14.sp,
+                                        fontFamily = FontFamily(Font(Res.font.inter)),
+                                        fontWeight = FontWeight(600),
+                                        color = Color(0xFF000000),
+                                    )
+
+                                )
+
+                                val totalPrize = it.price * count
+                                Text(
+                                    text = "$$totalPrize",
                                     style = TextStyle(
                                         fontSize = 14.sp,
                                         fontFamily = FontFamily(Font(Res.font.inter)),
@@ -758,7 +818,7 @@ class OrderLineScreen {
                     }
 
 
-                    val listOfitem = listOf(BillingItemList(2, "Thanduri chiken", 230))
+                    val listOfitem = listOf(BillingItemList(2, FoodItem(), 230))
 
 
                     LazyColumn(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.45f), userScrollEnabled = true) {
@@ -769,7 +829,7 @@ class OrderLineScreen {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "x${it.count} ${it.itemName}",
+                                    text = "x${it.count} ${it.foodItem.name}",
                                     style = TextStyle(
                                         fontSize = 20.sp,
                                         fontFamily = FontFamily(Font(Res.font.inter)),
@@ -987,6 +1047,90 @@ class OrderLineScreen {
 
 
         }
+    }
+
+    @Composable
+    private fun Count(onDismissRequest: () -> Unit, onConfirmation: () -> Unit):Int {
+
+        var count by remember { mutableStateOf(1) }
+
+        Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(dismissOnBackPress = true)) {
+            Card(modifier = Modifier.wrapContentSize(), shape = RoundedCornerShape(20.dp)) {
+                LazyColumn(
+                    modifier = Modifier.wrapContentSize().padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    item {
+                        Text(
+                            text = "Add New Category",
+                            style = TextStyle(
+                                fontSize = 30.sp,
+                                fontFamily = FontFamily(Font(Res.font.inter)),
+                                fontWeight = FontWeight(700),
+                                color = Color(0xFF000000),
+                            ),
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)
+                        )
+                    }
+                    item {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                            value = count.toString(),
+                            onValueChange = { s ->
+                                if (s.all { it.isDigit() }) {
+                                    count = s.toInt()
+                                }
+                            },
+                            maxLines = 3,
+                            readOnly = false,
+                            label = {
+                                Text(
+                                    "Category ", fontWeight = FontWeight(1000),
+                                    fontFamily = FontFamily(Font(Res.font.inter)),
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(start = 10.dp)
+                                )
+                            },
+                            placeholder = {
+                                Text(
+                                    "Category Name", fontWeight = FontWeight(1000),
+                                    fontFamily = FontFamily(Font(Res.font.inter)),
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(start = 10.dp)
+                                )
+                            }
+                        )
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth().padding(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            TextButton(
+                                onClick = { onDismissRequest() },
+                                modifier = Modifier.padding(8.dp),
+                            ) {
+                                Text("Dismiss")
+                            }
+                            TextButton(
+                                onClick = {
+                                    onConfirmation()
+                                },
+                                modifier = Modifier.padding(8.dp),
+                            ) {
+                                Text("Confirm")
+                            }
+                        }
+                    }
+
+                }
+
+
+            }
+        }
+        return count
     }
 
 

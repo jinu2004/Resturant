@@ -1,6 +1,9 @@
 package navcontroller
 
 import androidx.compose.runtime.Composable
+import domain.viewmodel.MainViewModel
+import domain.viewmodel.ManageDishesViewModel
+import screens.ManageDishes
 import screens.OrderLineScreen
 
 enum class ListOfScreen(
@@ -22,14 +25,14 @@ enum class ListOfScreen(
 
 @Composable
 fun CustomNavigationHost(
-    navController: NavController
+    navController: NavController, manageDishesViewModel: ManageDishesViewModel, mainViewModel: MainViewModel
 ) {
     NavigationHost(navController) {
         composable(ListOfScreen.OrderLine.label) {
-            OrderLineScreen().View()
+            OrderLineScreen(mainViewModel).View()
         }
-        composable(ListOfScreen.ManageTable.label) {
-
+        composable(ListOfScreen.ManageDishes.label) {
+            ManageDishes(manageDishesViewModel).View()
         }
 
     }.build()
